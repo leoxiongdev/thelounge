@@ -75,19 +75,25 @@ socket.on("auth", function(data) {
 			vueApp.currentUserVisibleError = "Authorizing…";
 			$("#loading-page-message").text(vueApp.currentUserVisibleError);
 
-			let lastMessage = -1;
+			const channelData = [];
 
 			for (const network of vueApp.networks) {
 				for (const chan of network.channels) {
-					for (const msg of chan.messages) {
-						if (msg.id > lastMessage) {
-							lastMessage = msg.id;
-						}
+					let lastMessage = 0;
+
+					if (chan.messages.length > 0) {
+						lastMessage = chan.messages[chan.messages.length - 1].id;
 					}
+
+					channelData.push({
+						id: chan.id,
+						firstUnread: chan.firstUnread,
+						lastMessage: lastMessage,
+					});
 				}
 			}
 
-			socket.emit("auth", {user, token, lastMessage});
+			socket.emit("auth", {user, token, channelData});
 		}
 	}
 

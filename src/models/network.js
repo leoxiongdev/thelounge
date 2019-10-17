@@ -287,12 +287,12 @@ Network.prototype.setNick = function(nick) {
  *
  * @see {@link Chan#getFilteredClone}
  */
-Network.prototype.getFilteredClone = function(lastActiveChannel, lastMessage) {
+Network.prototype.getFilteredClone = function(lastActiveChannel, channelData) {
 	const filteredNetwork = Object.keys(this).reduce((newNetwork, prop) => {
 		if (prop === "channels") {
 			// Channels objects perform their own cloning
 			newNetwork[prop] = this[prop].map((channel) =>
-				channel.getFilteredClone(lastActiveChannel, lastMessage)
+				channel.getFilteredClone(lastActiveChannel, channelData)
 			);
 		} else if (!filteredFromClient[prop]) {
 			// Some properties that are not useful for the client are skipped

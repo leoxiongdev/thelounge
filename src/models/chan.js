@@ -164,20 +164,51 @@ Chan.prototype.removeUser = function(user) {
  *
  * @param {(int|bool)} lastActiveChannel - Last known active user channel id (needed to control how many messages are sent)
  *                                         If true, channel is assumed active.
- * @param {int} lastMessage - Last message id seen by active client to avoid sending duplicates.
+ * @param {Map} channelData - Currently known state on the active client (last unread message, last seen message)
  */
-Chan.prototype.getFilteredClone = function(lastActiveChannel, lastMessage) {
+Chan.prototype.getFilteredClone = function(lastActiveChannel, channelData) {
+	const clientChannelState = (channelData && channelData.get(this.id)) || {};
+
+	// If client opened channels while disconnected, we need to resync unread counters
+	// TODO: This is a terrible place to do, as the function is called getFilteredClone
+	// TODO: Send updated counters to other open clients
+	// TODO: For currently active channel on the client, we need to reset unread and highlight to 0.
+	//       Do we need to send active channel id from client to server and compaer?
+	if (
+		clientChannelState.firstUnread > this.firstUnread &&
+		clientChannelState.firstUnread <= this.messages[this.messages.length - 1].id
+	) {
+		let unread = 0;
+		let highlight = 0;
+
+		for (const msg of this.messages) {
+			if (msg.id > clientChannelState.firstUnread) {
+				unread++;
+
+				if (msg.highlight) {
+					highlight++;
+				}
+			}
+		}
+
+		this.unread = unread;
+		this.highlight = highlight;
+		this.firstUnread = clientChannelState.firstUnread;
+	}
+
 	return Object.keys(this).reduce((newChannel, prop) => {
 		if (prop === "users") {
 			// Do not send users, client requests updated user list whenever needed
 			newChannel[prop] = [];
 		} else if (prop === "messages") {
 			// If client is reconnecting, only send new messages that client has not seen yet
-			if (lastMessage > -1) {
+			if (clientChannelState.lastMessage > 0) {
 				// When reconnecting, always send up to 100 messages to prevent message gaps on the client
 				// See https://github.com/thelounge/thelounge/issues/1883
-				newChannel[prop] = this[prop].filter((m) => m.id > lastMessage).slice(-100);
 				newChannel.moreHistoryAvailable = this[prop].length > 100;
+				newChannel[prop] = this[prop]
+					.filter((m) => m.id > clientChannelState.lastMessage)
+					.slice(-100);
 			} else {
 				// If channel is active, send up to 100 last messages, for all others send just 1
 				// Client will automatically load more messages whenever needed based on last seen messages

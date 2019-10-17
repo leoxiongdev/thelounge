@@ -207,7 +207,7 @@ describe("Network", function() {
 		});
 	});
 
-	describe("#getFilteredClone(lastActiveChannel, lastMessage)", function() {
+	describe("#getFilteredClone()", function() {
 		it("should filter channels", function() {
 			const chan = new Chan();
 			chan.setUser(new User({nick: "test"}));

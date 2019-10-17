@@ -194,7 +194,7 @@ describe("Chan", function() {
 		});
 	});
 
-	describe("#getFilteredClone(lastActiveChannel, lastMessage)", function() {
+	describe("#getFilteredClone()", function() {
 		it("should send empty user list", function() {
 			const chan = new Chan();
 			chan.setUser(new User({nick: "test"}));
@@ -279,7 +279,12 @@ describe("Chan", function() {
 
 			expect(chan.id).to.equal(1337);
 
-			const messages = chan.getFilteredClone(1337, 12).messages;
+			const channelData = new Map();
+			channelData.set(1337, {
+				lastMessage: 12,
+			});
+
+			const messages = chan.getFilteredClone(1337, channelData).messages;
 
 			expect(messages).to.have.lengthOf(3);
 			expect(messages[0].id).to.equal(13);
