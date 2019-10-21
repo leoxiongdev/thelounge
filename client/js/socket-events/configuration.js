@@ -33,7 +33,7 @@ socket.on("configuration", function(data) {
 	vueApp.serverConfiguration = data;
 
 	if (data.fileUpload) {
-		upload.setMaxFileSize(data.fileUploadMaxFileSize);
+		upload.initialize(data.fileUploadMaxFileSize);
 	}
 
 	options.initialize();
